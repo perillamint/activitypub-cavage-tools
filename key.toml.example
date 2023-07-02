@@ -1,0 +1,7 @@
+[[key]]
+id = "https://example.com/actor#main-key"
+pem = """
+-----BEGIN RSA PRIVATE KEY-----
+PLEASE PUT YOUR PEM HERE
+-----END RSA PRIVATE KEY-----
+"""
