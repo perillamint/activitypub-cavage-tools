@@ -1,3 +1,4 @@
+use reqwest::Request;
 use sigh::alg::RsaSha256;
 use sigh::{Key, PrivateKey, SigningConfig};
 use url::Url;
@@ -35,8 +36,9 @@ async fn main() {
     let host = url.host_str().unwrap();
 
     let client = reqwest::Client::new();
-    let mut req: http::Request<_> = client
-        .get(url.clone())
+    let mut req: http::Request<reqwest::Body> = http::Request::builder()
+        .method("GET")
+        .uri(url.as_str())
         .header("Accept", "application/activity+json")
         .header(
             "Date",
@@ -45,9 +47,7 @@ async fn main() {
                 .to_string(),
         )
         .header("Host", host)
-        .build()
-        .unwrap()
-        .try_into()
+        .body(reqwest::Body::from(""))
         .unwrap();
 
     println!("req: {:#?}", req);
