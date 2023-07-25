@@ -14,5 +14,13 @@ sigh = { path = "../sigh" }
 http = "0.2.9"
 toml = "0.7.5"
 serde = { version = "1.0", features = ["derive"] }
-clap = { version = "4.3.10", features = ["derive"] }
+serde_json = "1.0.103"
+sha2 = "0.10.7"
 url = "2.4.0"
+anyhow = "1.0.72"
+base64 = "0.21.2"
+
+clap = { version = "4.3.10", features = ["derive"] }
+clap-repl = "0.1.0"
+console = "0.15.7"
+rustyline = "12.0.0"

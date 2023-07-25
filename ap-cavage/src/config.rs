@@ -5,6 +5,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Key {
     pub id: String,
+    pub actor: String,
     pub pem: String,
 }
 
