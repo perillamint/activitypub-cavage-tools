@@ -34,7 +34,9 @@ enum ShellCommand {
         #[arg(short, long)]
         url: String,
         #[arg(long)]
-        payload: String,
+        payload: Option<String>,
+        #[arg(long)]
+        payload_file: Option<String>,
     },
     Action {
         #[arg(short, long)]
@@ -180,21 +182,41 @@ async fn main() {
                     }
                 }
             }
-            ShellCommand::Post { url, payload } => {
+            ShellCommand::Post { url, payload, payload_file } => {
+                let pl = match (payload, payload_file) {
+                    (Some(payload), _) => {
+                        payload
+                    },
+                    (None, Some(file)) => {
+                        match std::fs::read_to_string(file) {
+                            Ok(str) => str,
+                            Err(e) => {
+                                println!("Failed to read file! {:?}", e);
+                                continue;
+                            }
+                        }
+                    },
+                    (None, None) => {
+                        println!("--payload or --payload-file is required. Please use --help to get detailed information.");
+                        continue;
+                    }
+                };
+
                 let url = match Url::parse(&url) {
                     Ok(url) => url,
                     Err(e) => {
-                        println!("URL failed: {}", e);
+                        println!("URL failed: {:?}", e);
                         continue;
                     }
                 };
-                let payload = match serde_json::from_str::<serde_json::Value>(&payload) {
+                let payload = match serde_json::from_str::<serde_json::Value>(&pl) {
                     Ok(payload) => payload,
                     Err(e) => {
-                        println!("JSON failed: {}", e);
+                        println!("JSON failed: {:?}", e);
                         continue;
                     }
                 };
+
                 let sr = &signed_requesters[keyslot];
                 let result = sr.requester.post(url, payload).await;
                 match result {
@@ -235,8 +257,8 @@ async fn main() {
                             Ok(result) => {
                                 println!("{:#?}", result);
                             }
-                            Err(_e) => {
-                                println!("JSON failed: {}", result);
+                            Err(e) => {
+                                println!("Failed to parse received JSON: {:?}\npayload: {}", e, result);
                             }
                         }
                     }
