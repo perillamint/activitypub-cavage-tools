@@ -4,7 +4,6 @@ use url::Url;
 use clap::Parser;
 use clap_repl::ClapEditor;
 use console::style;
-use rustyline::DefaultEditor;
 use util::requester::SignedRequester;
 
 mod config;
@@ -118,6 +117,25 @@ struct SignedRequesterEntry {
     pub key_id: String,
 }
 
+fn parse_and_print_result(result: anyhow::Result<String>) {
+    match result {
+        Ok(result) => {
+            println!("Request successful! (so please do not execute the command again)");
+            match serde_json::from_str::<serde_json::Value>(&result) {
+                Ok(result) => {
+                    println!("{:#?}", result);
+                }
+                Err(e) => {
+                    println!("Failed to parse received JSON: {:?}\npayload: {}", e, result);
+                }
+            }
+        }
+        Err(e) => {
+            println!("{}", style(e).red());
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
@@ -166,21 +184,7 @@ async fn main() {
                 };
                 let sr = &signed_requesters[keyslot];
                 let result = sr.requester.get(url).await;
-                match result {
-                    Ok(result) => {
-                        match serde_json::from_str::<serde_json::Value>(&result) {
-                            Ok(result) => {
-                                println!("{:#?}", result);
-                            }
-                            Err(_e) => {
-                                println!("JSON failed: {}", result);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        println!("{}", style(e).red());
-                    }
-                }
+                parse_and_print_result(result);
             }
             ShellCommand::Post { url, payload, payload_file } => {
                 let pl = match (payload, payload_file) {
@@ -219,21 +223,7 @@ async fn main() {
 
                 let sr = &signed_requesters[keyslot];
                 let result = sr.requester.post(url, payload).await;
-                match result {
-                    Ok(result) => {
-                        match serde_json::from_str::<serde_json::Value>(&result) {
-                            Ok(result) => {
-                                println!("{:#?}", result);
-                            }
-                            Err(_e) => {
-                                println!("JSON failed: {}", result);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        println!("{}", style(e).red());
-                    }
-                }
+                parse_and_print_result(result);
             }
             ShellCommand::Action { url, action, id, target} => {
                 let url = match Url::parse(&url) {
@@ -251,21 +241,7 @@ async fn main() {
                     target,
                 );
                 let result = sr.requester.post(url, serde_json::to_value(action).unwrap()).await;
-                match result {
-                    Ok(result) => {
-                        match serde_json::from_str::<serde_json::Value>(&result) {
-                            Ok(result) => {
-                                println!("{:#?}", result);
-                            }
-                            Err(e) => {
-                                println!("Failed to parse received JSON: {:?}\npayload: {}", e, result);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        println!("{}", style(e).red());
-                    }
-                }
+                parse_and_print_result(result);
             }
             ShellCommand::Response { url, action, id, req_id, req_type, req_actor, req_object } => {
                 let url = match Url::parse(&url) {
@@ -288,21 +264,7 @@ async fn main() {
                     ),
                 );
                 let result = sr.requester.post(url, serde_json::to_value(action).unwrap()).await;
-                match result {
-                    Ok(result) => {
-                        match serde_json::from_str::<serde_json::Value>(&result) {
-                            Ok(result) => {
-                                println!("{:#?}", result);
-                            }
-                            Err(_e) => {
-                                println!("JSON failed: {}", result);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        println!("{}", style(e).red());
-                    }
-                }
+                parse_and_print_result(result);
             }
         }
     }
